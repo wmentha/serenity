@@ -100,6 +100,8 @@ public:
     // ^FormAssociatedElement
     // https://html.spec.whatwg.org/multipage/forms.html#category-listed
     virtual bool is_listed() const override { return true; }
+    // https://html.spec.whatwg.org/multipage/input.html#the-input-element:the-input-element-10
+    virtual bool mutable_() const override;
 
     // https://html.spec.whatwg.org/multipage/forms.html#category-submit
     virtual bool is_submittable() const override { return true; }
@@ -147,8 +149,12 @@ private:
     // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#concept-fe-dirty
     bool m_dirty_value { false };
 
+    // https://html.spec.whatwg.org/multipage/input.html#dom-input-indeterminate
+    bool m_indeterminate { false };
+
     // https://html.spec.whatwg.org/multipage/input.html#the-input-element:legacy-pre-activation-behavior
     bool m_before_legacy_pre_activation_behavior_checked { false };
+    bool m_before_legacy_pre_activation_behavior_indeterminate { false };
     JS::GCPtr<HTMLInputElement> m_legacy_pre_activation_behavior_checked_element_in_group;
 
     // https://html.spec.whatwg.org/multipage/input.html#concept-input-type-file-selected

@@ -34,7 +34,9 @@ HTMLInputElement::HTMLInputElement(DOM::Document& document, DOM::QualifiedName q
     activation_behavior = [this](auto&) {
         // The activation behavior for input elements are these steps:
 
-        // FIXME: 1. If this element is not mutable and is not in the Checkbox state and is not in the Radio state, then return.
+        // 1. If this element is not mutable and is not in the Checkbox state and is not in the Radio state, then return.
+        if (!mutable_() && (type_state() != HTML::TypeAttributeState::Checkbox || type_state() != HTML::TypeAttributeState::Radio))
+            return;
 
         // 2. Run this element's input activation behavior, if any, and do nothing otherwise.
         run_input_activation_behavior();
@@ -147,7 +149,9 @@ static void show_the_picker_if_applicable(HTMLInputElement& element)
     if (!is<HTML::Window>(global_object) || !static_cast<HTML::Window&>(global_object).has_transient_activation())
         return;
 
-    // FIXME: 2. If element is not mutable, then return.
+    // 2. If element is not mutable, then return.
+    if (!mutable_())
+        return;
 
     // 3. If element's type attribute is in the File Upload state, then run these steps in parallel:
     if (element.type_state() == HTMLInputElement::TypeAttributeState::FileUpload) {
@@ -187,7 +191,9 @@ WebIDL::ExceptionOr<void> HTMLInputElement::show_picker()
 {
     // The showPicker() method steps are:
 
-    // FIXME: 1. If this is not mutable, then throw an "InvalidStateError" DOMException.
+    // 1. If this is not mutable, then throw an "InvalidStateError" DOMException.
+    if (!mutable_())
+        return WebIDL::InvalidStateError::create(realm(), "Input element is not mutable"sv);
 
     // 2. If this's relevant settings object's origin is not same origin with this's relevant settings object's top-level origin,
     // and this's type attribute is not in the File Upload state or Color state, then throw a "SecurityError" DOMException.
@@ -356,6 +362,15 @@ Optional<String> HTMLInputElement::placeholder_value() const
     }
 
     return placeholder;
+}
+
+bool HTMLInputElement::mutable_() const
+{
+    // Each input element can be mutable. Except where otherwise specified, an input element is always mutable.
+    if (!is_text_editable(type_state()))
+        return enable();
+
+    return enable() && !has_attribute(AttributeNames::readonly);
 }
 
 void HTMLInputElement::create_shadow_tree_if_needed()

@@ -17,6 +17,11 @@ HTMLTextAreaElement::HTMLTextAreaElement(DOM::Document& document, DOM::Qualified
 
 HTMLTextAreaElement::~HTMLTextAreaElement() = default;
 
+bool HTMLTextAreaElement::mutable_() const
+{
+    return enabled() && !has_attribute(HTML::AttributeNames::readonly);
+}
+
 // https://html.spec.whatwg.org/multipage/interaction.html#dom-tabindex
 i32 HTMLTextAreaElement::default_tab_index_value() const
 {
