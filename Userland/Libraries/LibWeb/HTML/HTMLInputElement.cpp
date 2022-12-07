@@ -94,6 +94,12 @@ void HTMLInputElement::set_checked_binding(bool checked)
     }
 }
 
+void HTMLInputElement::set_indeterminate(bool indeterminateness)
+{
+    if (type_state() == TypeAttributeState::RadioButton)
+        m_indeterminate = indeterminateness;
+}
+
 // https://html.spec.whatwg.org/multipage/input.html#dom-input-files
 JS::GCPtr<FileAPI::FileList> HTMLInputElement::files()
 {
@@ -526,14 +532,16 @@ void HTMLInputElement::set_checked_within_group()
 void HTMLInputElement::legacy_pre_activation_behavior()
 {
     m_before_legacy_pre_activation_behavior_checked = checked();
+    m_before_legacy_pre_activation_behavior_indeterminate = indeterminate();
 
     // 1. If this element's type attribute is in the Checkbox state, then set
     // this element's checkedness to its opposite value (i.e. true if it is
     // false, false if it is true) and set this element's indeterminate IDL
     // attribute to false.
-    // FIXME: Set indeterminate to false when that exists.
     if (type_state() == TypeAttributeState::Checkbox) {
         set_checked(!checked(), ChangeSource::User);
+        set_indeterminate(false);
+        return;
     }
 
     // 2. If this element's type attribute is in the Radio Button state, then
@@ -563,14 +571,16 @@ void HTMLInputElement::legacy_cancelled_activation_behavior()
     // to the values they had before the legacy-pre-activation behavior was run.
     if (type_state() == TypeAttributeState::Checkbox) {
         set_checked(m_before_legacy_pre_activation_behavior_checked, ChangeSource::Programmatic);
+        set_indeterminate(m_before_legacy_pre_activation_behavior_indeterminate);
+        return;
     }
 
-    // 2. If this element 's type attribute is in the Radio Button state, then
+    // 2. If this element's type attribute is in the Radio Button state, then
     // if the element to which a reference was obtained in the
     // legacy-pre-activation behavior, if any, is still in what is now this
-    // element' s radio button group, if it still has one, and if so, setting
-    // that element 's checkedness to true; or else, if there was no such
-    // element, or that element is no longer in this element' s radio button
+    // element's radio button group, if it still has one, and if so, setting
+    // that element checkedness to true; or else, if there was no such
+    // element, or that element is no longer in this element's radio button
     // group, or if this element no longer has a radio button group, setting
     // this element's checkedness to false.
     if (type_state() == TypeAttributeState::RadioButton) {
