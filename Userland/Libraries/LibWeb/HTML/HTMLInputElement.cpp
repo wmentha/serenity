@@ -34,7 +34,9 @@ HTMLInputElement::HTMLInputElement(DOM::Document& document, DOM::QualifiedName q
     activation_behavior = [this](auto&) {
         // The activation behavior for input elements are these steps:
 
-        // FIXME: 1. If this element is not mutable and is not in the Checkbox state and is not in the Radio state, then return.
+        // 1. If this element is not mutable and is not in the Checkbox state and is not in the Radio state, then return.
+        if (!mutable_() && type_state() != HTML::TypeAttributeState::Checkbox && type_state() != HTML::TypeAttributeState::Radio)
+            return;
 
         // 2. Run this element's input activation behavior, if any, and do nothing otherwise.
         run_input_activation_behavior();
@@ -94,6 +96,12 @@ void HTMLInputElement::set_checked_binding(bool checked)
     }
 }
 
+void HTMLInputElement::set_indeterminate(bool indeterminateness)
+{
+    if (type_state() == TypeAttributeState::RadioButton)
+        m_indeterminate = indeterminateness;
+}
+
 // https://html.spec.whatwg.org/multipage/input.html#dom-input-files
 JS::GCPtr<FileAPI::FileList> HTMLInputElement::files()
 {
@@ -147,7 +155,9 @@ static void show_the_picker_if_applicable(HTMLInputElement& element)
     if (!is<HTML::Window>(global_object) || !static_cast<HTML::Window&>(global_object).has_transient_activation())
         return;
 
-    // FIXME: 2. If element is not mutable, then return.
+    // 2. If element is not mutable, then return.
+    if (!mutable_())
+        return;
 
     // 3. If element's type attribute is in the File Upload state, then run these steps in parallel:
     if (element.type_state() == HTMLInputElement::TypeAttributeState::FileUpload) {
@@ -187,7 +197,9 @@ WebIDL::ExceptionOr<void> HTMLInputElement::show_picker()
 {
     // The showPicker() method steps are:
 
-    // FIXME: 1. If this is not mutable, then throw an "InvalidStateError" DOMException.
+    // 1. If this is not mutable, then throw an "InvalidStateError" DOMException.
+    if (!mutable_())
+        return WebIDL::InvalidStateError::create(realm(), "Input element is not mutable"sv);
 
     // 2. If this's relevant settings object's origin is not same origin with this's relevant settings object's top-level origin,
     // and this's type attribute is not in the File Upload state or Color state, then throw a "SecurityError" DOMException.
@@ -358,23 +370,46 @@ Optional<DeprecatedString> HTMLInputElement::placeholder_value() const
     return placeholder;
 }
 
+// https://html.spec.whatwg.org/multipage/input.html#the-readonly-attribute
+static bool is_text_editable(HTML::HTMLInputElement::TypeAttributeState state)
+{
+    // NOTE: Based on input types that can be marked 'readonly'
+    switch (state) {
+    case HTML::TypeAttributeState::Text:
+    case HTML::TypeAttributeState::Search:
+    case HTML::TypeAttributeState::Telephone:
+    case HTML::TypeAttributeState::URL:
+    case HTML::TypeAttributeState::Email:
+    case HTML::TypeAttributeState::Password:
+    case HTML::TypeAttributeState::Date:
+    case HTML::TypeAttributeState::Month:
+    case HTML::TypeAttributeState::Week:
+    case HTML::TypeAttributeState::Time:
+    case HTML::TypeAttributeState::LocalDateAndTime:
+    case HTML::TypeAttributeState::Number:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool HTMLInputElement::mutable_() const
+{
+    // Each input element can be mutable. Except where otherwise specified, an input element is always mutable.
+    if (!is_text_editable(type_state()))
+        return enable();
+
+    return enable() && !has_attribute(AttributeNames::readonly);
+}
+
 void HTMLInputElement::create_shadow_tree_if_needed()
 {
     if (shadow_root())
         return;
 
-    // FIXME: This could be better factored. Everything except the below types becomes a text input.
-    switch (type_state()) {
-    case TypeAttributeState::RadioButton:
-    case TypeAttributeState::Checkbox:
-    case TypeAttributeState::Button:
-    case TypeAttributeState::SubmitButton:
-    case TypeAttributeState::ResetButton:
-    case TypeAttributeState::ImageButton:
+    // Everything except the below types becomes a text input.
+    if (!is_text_editable(type_state()))
         return;
-    default:
-        break;
-    }
 
     auto* shadow_root = heap().allocate<DOM::ShadowRoot>(realm(), document(), *this);
     auto initial_value = m_value;
@@ -469,7 +504,11 @@ void HTMLInputElement::set_type(DeprecatedString const& type)
 // https://html.spec.whatwg.org/multipage/input.html#value-sanitization-algorithm
 DeprecatedString HTMLInputElement::value_sanitization_algorithm(DeprecatedString value) const
 {
-    if (type_state() == HTMLInputElement::TypeAttributeState::Text || type_state() == HTMLInputElement::TypeAttributeState::Search || type_state() == HTMLInputElement::TypeAttributeState::Telephone || type_state() == HTMLInputElement::TypeAttributeState::Password) {
+    switch (type_state) {
+    case HTMLInputElement::TypeAttributeState::Text:
+    case HTMLInputElement::TypeAttributeState::Search:
+    case HTMLInputElement::TypeAttributeState::Telephone:
+    case HTMLInputElement::TypeAttributeState::Password:
         // Strip newlines from the value.
         if (value.contains('\r') || value.contains('\n')) {
             StringBuilder builder;
@@ -479,7 +518,8 @@ DeprecatedString HTMLInputElement::value_sanitization_algorithm(DeprecatedString
             }
             return builder.to_deprecated_string();
         }
-    } else if (type_state() == HTMLInputElement::TypeAttributeState::URL) {
+        break;
+    case HTMLInputElement::TypeAttributeState::URL:
         // Strip newlines from the value, then strip leading and trailing ASCII whitespace from the value.
         if (value.contains('\r') || value.contains('\n')) {
             StringBuilder builder;
@@ -489,16 +529,20 @@ DeprecatedString HTMLInputElement::value_sanitization_algorithm(DeprecatedString
             }
             return builder.string_view().trim(Infra::ASCII_WHITESPACE);
         }
-    } else if (type_state() == HTMLInputElement::TypeAttributeState::Number) {
+        break;
+    case HTMLInputElement::TypeAttributeState::Number:
         // If the value of the element is not a valid floating-point number, then set it to the empty string instead.
         // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-floating-point-number-values
         // 6. Skip ASCII whitespace within input given position.
         auto maybe_double = value.to_double(TrimWhitespace::Yes);
         if (!maybe_double.has_value() || !isfinite(maybe_double.value()))
             return "";
+        break;
+    default:
+        // FIXME: Implement remaining value sanitation algorithms
+        break;
+        // VERIFY_NOT_REACHED();
     }
-
-    // FIXME: Implement remaining value sanitation algorithms
     return value;
 }
 
@@ -526,14 +570,16 @@ void HTMLInputElement::set_checked_within_group()
 void HTMLInputElement::legacy_pre_activation_behavior()
 {
     m_before_legacy_pre_activation_behavior_checked = checked();
+    m_before_legacy_pre_activation_behavior_indeterminate = indeterminate();
 
     // 1. If this element's type attribute is in the Checkbox state, then set
     // this element's checkedness to its opposite value (i.e. true if it is
     // false, false if it is true) and set this element's indeterminate IDL
     // attribute to false.
-    // FIXME: Set indeterminate to false when that exists.
     if (type_state() == TypeAttributeState::Checkbox) {
         set_checked(!checked(), ChangeSource::User);
+        set_indeterminate(false);
+        return;
     }
 
     // 2. If this element's type attribute is in the Radio Button state, then
@@ -563,14 +609,16 @@ void HTMLInputElement::legacy_cancelled_activation_behavior()
     // to the values they had before the legacy-pre-activation behavior was run.
     if (type_state() == TypeAttributeState::Checkbox) {
         set_checked(m_before_legacy_pre_activation_behavior_checked, ChangeSource::Programmatic);
+        set_indeterminate(m_before_legacy_pre_activation_behavior_indeterminate);
+        return;
     }
 
-    // 2. If this element 's type attribute is in the Radio Button state, then
+    // 2. If this element's type attribute is in the Radio Button state, then
     // if the element to which a reference was obtained in the
     // legacy-pre-activation behavior, if any, is still in what is now this
-    // element' s radio button group, if it still has one, and if so, setting
-    // that element 's checkedness to true; or else, if there was no such
-    // element, or that element is no longer in this element' s radio button
+    // element's radio button group, if it still has one, and if so, setting
+    // that element checkedness to true; or else, if there was no such
+    // element, or that element is no longer in this element's radio button
     // group, or if this element no longer has a radio button group, setting
     // this element's checkedness to false.
     if (type_state() == TypeAttributeState::RadioButton) {

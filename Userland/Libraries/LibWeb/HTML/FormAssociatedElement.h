@@ -49,6 +49,9 @@ public:
 
     bool enabled() const;
 
+    // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#mutability
+    virtual bool mutable_() const { return enabled() };
+
     void set_parser_inserted(Badge<HTMLParser>);
 
     // https://html.spec.whatwg.org/multipage/forms.html#category-listed
@@ -80,6 +83,7 @@ private:
 
     // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#parser-inserted-flag
     bool m_parser_inserted { false };
+    bool m_mutable { true };
 
     void reset_form_owner();
 };

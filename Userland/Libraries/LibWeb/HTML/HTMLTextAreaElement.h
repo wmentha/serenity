@@ -34,6 +34,8 @@ public:
     // ^FormAssociatedElement
     // https://html.spec.whatwg.org/multipage/forms.html#category-listed
     virtual bool is_listed() const override { return true; }
+    // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#concept-fe-mutable
+    virtual bool mutable_() const override;
 
     // https://html.spec.whatwg.org/multipage/forms.html#category-submit
     virtual bool is_submittable() const override { return true; }
