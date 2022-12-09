@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2020, Andreas Kling <kling@serenityos.org>
+ * Copyright (c) 2022, William JK Mentha <wjkmentha@gmail.com>
  * Copyright (c) 2022, the SerenityOS developers.
  *
  * SPDX-License-Identifier: BSD-2-Clause
@@ -11,6 +12,11 @@
 #include <LibGfx/TextWrapping.h>
 
 namespace GUI {
+
+enum class CheckStateDirection : bool {
+    Forward,
+    Backward,
+};
 
 class AbstractButton : public Widget {
     C_OBJECT_ABSTRACT(AbstractButton);
@@ -59,6 +65,8 @@ protected:
     virtual void change_event(Event&) override;
 
     void paint_text(Painter&, Gfx::IntRect const&, Gfx::Font const&, Gfx::TextAlignment, Gfx::TextWrapping = Gfx::TextWrapping::DontWrap);
+
+    virtual void next_check_state() = 0;
 
 private:
     String m_text;

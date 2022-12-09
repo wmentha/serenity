@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2020, Andreas Kling <kling@serenityos.org>
+ * Copyright (c) 2022, William JK Mentha <wjkmentha@gmail.com>
  * Copyright (c) 2022, the SerenityOS developers.
  *
  * SPDX-License-Identifier: BSD-2-Clause
@@ -71,7 +72,22 @@ void CheckBox::click(unsigned)
 {
     if (!is_enabled())
         return;
-    set_checked(!is_checked());
+
+    if (m_tristate) {
+        next_check_state();
+        m_check_state != GUI::CheckState::Unchecked ? set_checked(true) : set_checked(false);
+    } else {
+        set_checked(!is_checked());
+    }
+}
+
+void CheckBox::next_check_state()
+{
+    if (m_check_state_direction == GUI::CheckStateDirection::Forward)
+        m_check_state == GUI::CheckState::Checked ? m_check_state = GUI::CheckState::Unchecked : ++m_check_state;
+    else
+        m_check_state == GUI::CheckState::Unchecked ? m_check_state = GUI::CheckState::Checked : --m_check_state;
+    }
 }
 
 void CheckBox::set_autosize(bool autosize)
