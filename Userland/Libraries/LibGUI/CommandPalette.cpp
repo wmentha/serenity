@@ -54,11 +54,11 @@ public:
         if (exclusive) {
             Gfx::IntRect radio_rect { 0, 0, 12, 12 };
             radio_rect.center_within(cell_rect);
-            Gfx::StylePainter::paint_radio_button(painter, radio_rect, palette, checked, false);
+            Gfx::StylePainter::paint_radio_button(painter, radio_rect, palette, checked ? LibGUI::TriCheckState::Checked : LibGUI::TriCheckState::Unchecked, false);
         } else {
             Gfx::IntRect radio_rect { 0, 0, 13, 13 };
             radio_rect.center_within(cell_rect);
-            Gfx::StylePainter::paint_check_box(painter, radio_rect, palette, true, checked, false);
+            Gfx::StylePainter::paint_check_box(painter, radio_rect, palette, LibGUI::TriCheckState::Checked, false);
         }
     }
 };

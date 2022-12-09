@@ -48,9 +48,9 @@ void StylePainter::paint_radio_button(Painter& painter, IntRect const& rect, Pal
     current().paint_radio_button(painter, rect, palette, is_checked, is_being_pressed);
 }
 
-void StylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, bool is_checked, bool is_being_pressed)
+void StylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, LibGUI::TriCheckState check_state, bool is_being_pressed)
 {
-    current().paint_check_box(painter, rect, palette, is_enabled, is_checked, is_being_pressed);
+    current().paint_check_box(painter, rect, palette, is_enabled, check_state, is_being_pressed);
 }
 
 void StylePainter::paint_transparency_grid(Painter& painter, IntRect const& rect, Palette const& palette)

@@ -12,6 +12,12 @@
 
 namespace GUI {
 
+enum class TriCheckState {
+    Unchecked,
+    Checked,
+    Indeterminate,
+};
+
 class AbstractButton : public Widget {
     C_OBJECT_ABSTRACT(AbstractButton);
 
@@ -26,11 +32,15 @@ public:
     bool is_exclusive() const { return m_exclusive; }
     void set_exclusive(bool b) { m_exclusive = b; }
 
-    bool is_checked() const { return m_checked; }
-    void set_checked(bool, AllowCallback = AllowCallback::Yes);
+    TriCheckState is_checked() const { m_check_state != TriCheckState::Unchecked }
+    TriCheckState get_check_state() const { return m_check_state; }
+    void set_check_state(TriCheckState, AllowCallback = AllowCallback::Yes);
 
     bool is_checkable() const { return m_checkable; }
     void set_checkable(bool);
+
+    bool is_tristate() const { return m_tristate };
+    void set_tristate(bool state) { m_tristate = state; };
 
     bool is_hovered() const { return m_hovered; }
     bool is_being_pressed() const { return m_being_pressed; }
@@ -62,8 +72,9 @@ protected:
 
 private:
     String m_text;
-    bool m_checked { false };
+    TriCheckState m_check_state { TriCheckState::Unchecked };
     bool m_checkable { false };
+    bool m_tristate { false };
     bool m_hovered { false };
     bool m_being_pressed { false };
     bool m_being_keyboard_pressed { false };

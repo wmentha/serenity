@@ -552,7 +552,20 @@ static constexpr Gfx::CharacterBitmap s_checked_bitmap {
     9, 9
 };
 
-void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, bool is_checked, bool is_being_pressed)
+static constexpr  Gfx::CharacterBitmap s_indeterminate_bitmap {
+    "         "
+    "         "
+    "         "
+    " ####### "
+    "#########"
+    " ####### "
+    "         "
+    "         "
+    "         "sv,
+    9, 9
+};
+
+void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, LibGUI::TriCheckState check_state, bool is_being_pressed)
 {
     painter.fill_rect(rect, is_enabled ? palette.base() : palette.window());
     paint_frame(painter, rect, palette, Gfx::FrameShape::Container, Gfx::FrameShadow::Sunken, 2);
@@ -562,8 +575,15 @@ void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect,
         painter.draw_rect(rect.shrunken(4, 4), Color::MidGray);
     }
 
-    if (is_checked) {
+    switch (check_state) {
+    case LibGUI::TriCheckState::Checked:
         painter.draw_bitmap(rect.shrunken(4, 4).location(), s_checked_bitmap, is_enabled ? palette.base_text() : palette.threed_shadow1());
+        break;
+    case LibGUI::TriCheckState::Indeterminate:
+        painter.draw_bitmap(rect.shrunken(4, 4).location(), s_indeterminate_bitmap, is_enabled ? palette.base_text() : palette.threed_shadow1());
+        break;
+    default:
+        break;
     }
 }
 

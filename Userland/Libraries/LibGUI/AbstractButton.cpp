@@ -30,6 +30,11 @@ AbstractButton::AbstractButton(String text)
 
     REGISTER_STRING_PROPERTY("text", text, set_text);
     REGISTER_BOOL_PROPERTY("checked", is_checked, set_checked);
+    REGISTER_ENUM_PROPERTY("check_state", get_check_state, set_check_state, TriCheckState,
+        { TriCheckState::Unchecked, "Unchecked" },
+        { TriCheckState::Checked, "Checked" },
+        { TriCheckState::Indeterminate, "Indeterminate" });
+    REGISTER_BOOL_PROPERTY("tristate", is_tristate, set_tristate);
     REGISTER_BOOL_PROPERTY("checkable", is_checkable, set_checkable);
     REGISTER_BOOL_PROPERTY("exclusive", is_exclusive, set_exclusive);
 }
@@ -42,13 +47,13 @@ void AbstractButton::set_text(String text)
     update();
 }
 
-void AbstractButton::set_checked(bool checked, AllowCallback allow_callback)
+void AbstractButton::set_check_state(TriCheckState state, AllowCallback allow_callback)
 {
-    if (m_checked == checked)
+    if (m_checked_state == state)
         return;
-    m_checked = checked;
+    m_checked_state = state;
 
-    if (is_exclusive() && checked && parent_widget()) {
+    if (is_exclusive() && is_checked() && parent_widget()) {
         bool sibling_had_focus = false;
         parent_widget()->for_each_child_of_type<AbstractButton>([&](auto& sibling) {
             if (!sibling.is_exclusive())
@@ -57,13 +62,13 @@ void AbstractButton::set_checked(bool checked, AllowCallback allow_callback)
                 sibling_had_focus = true;
             if (!sibling.is_checked())
                 return IterationDecision::Continue;
-            sibling.m_checked = false;
+            sibling.m_checked_state = false;
             sibling.update();
             if (sibling.on_checked)
                 sibling.on_checked(false);
             return IterationDecision::Continue;
         });
-        m_checked = true;
+        m_checked_state = true;
         if (sibling_had_focus)
             set_focus(true);
     }
@@ -87,6 +92,14 @@ void AbstractButton::set_checkable(bool checkable)
     if (m_checkable == checkable)
         return;
     m_checkable = checkable;
+    update();
+}
+
+void AbstractButton::set_tristate(bool state)
+{
+    if (m_tristate == state)
+        return;
+    m_tristate = state;
     update();
 }
 

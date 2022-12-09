@@ -42,8 +42,14 @@ void CheckBoxPaintable::paint(PaintContext& context, PaintPhase phase) const
     PaintableBox::paint(context, phase);
 
     auto const& checkbox = static_cast<HTML::HTMLInputElement const&>(layout_box().dom_node());
-    if (phase == PaintPhase::Foreground)
-        Gfx::StylePainter::paint_check_box(context.painter(), enclosing_int_rect(absolute_rect()), context.palette(), layout_box().dom_node().enabled(), checkbox.checked(), being_pressed());
+    if (phase == PaintPhase::Foreground) {
+        auto check_state = LibGUI::TriCheckState::Unchecked;
+        if (checkbox.checked())
+            check_state = LibGUI::TriCheckState::Checked;
+        else if (checkbox.indeterminate())
+            check_state = LibGUI::TriCheckState::Indeterminate;
+        Gfx::StylePainter::paint_check_box(context.painter(), enclosing_int_rect(absolute_rect()), context.palette(), layout_box().dom_node().enabled(), check_state, being_pressed());
+    }
 }
 
 }

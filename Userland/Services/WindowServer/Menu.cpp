@@ -249,7 +249,7 @@ void Menu::draw(MenuItem const& item, bool is_drawing_all)
             } else {
                 Gfx::IntRect checkbox_rect { item.rect().x() + 5, 0, 13, 13 };
                 checkbox_rect.center_vertically_within(text_rect);
-                Gfx::StylePainter::paint_check_box(painter, checkbox_rect, palette, item.is_enabled(), item.is_checked(), false);
+                Gfx::StylePainter::paint_check_box(painter, checkbox_rect, palette, item.is_enabled(), item.is_checked() ? LibGUI::TriCheckState::Checked : LibGUI::TriCheckState::Unchecked, false);
             }
         } else if (item.icon()) {
             Gfx::IntRect icon_rect { item.rect().x() + 3, 0, s_item_icon_width, s_item_icon_width };

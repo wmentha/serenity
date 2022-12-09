@@ -43,7 +43,7 @@ public:
     virtual void paint_window_frame(Painter&, IntRect const&, Palette const&) = 0;
     virtual void paint_progressbar(Painter&, IntRect const&, Palette const&, int min, int max, int value, StringView text, Orientation = Orientation::Horizontal) = 0;
     virtual void paint_radio_button(Painter&, IntRect const&, Palette const&, bool is_checked, bool is_being_pressed) = 0;
-    virtual void paint_check_box(Painter&, IntRect const&, Palette const&, bool is_enabled, bool is_checked, bool is_being_pressed) = 0;
+    virtual void paint_check_box(Painter&, IntRect const&, Palette const&, bool is_enabled, LibGUI::TriCheckState check_state, bool is_being_pressed) = 0;
     virtual void paint_transparency_grid(Painter&, IntRect const&, Palette const&) = 0;
     virtual void paint_simple_rect_shadow(Painter&, IntRect const&, Bitmap const& shadow_bitmap, bool shadow_includes_frame = false, bool fill_content = false) = 0;
 
@@ -62,7 +62,7 @@ public:
     static void paint_window_frame(Painter&, IntRect const&, Palette const&);
     static void paint_progressbar(Painter&, IntRect const&, Palette const&, int min, int max, int value, StringView text, Orientation = Orientation::Horizontal);
     static void paint_radio_button(Painter&, IntRect const&, Palette const&, bool is_checked, bool is_being_pressed);
-    static void paint_check_box(Painter&, IntRect const&, Palette const&, bool is_enabled, bool is_checked, bool is_being_pressed);
+    static void paint_check_box(Painter&, IntRect const&, Palette const&, bool is_enabled, LibGUI::TriCheckState check_state, bool is_being_pressed);
     static void paint_transparency_grid(Painter&, IntRect const&, Palette const&);
     static void paint_simple_rect_shadow(Painter&, IntRect const&, Bitmap const& shadow_bitmap, bool shadow_includes_frame = false, bool fill_content = false);
 };
