@@ -58,7 +58,7 @@ void RadioButton::click(unsigned)
 {
     if (!is_enabled())
         return;
-    set_checked(true);
+    set_check_state(CheckState::Checked);
 }
 
 Optional<UISize> RadioButton::calculated_min_size() const

@@ -42,28 +42,28 @@ void AbstractButton::set_text(String text)
     update();
 }
 
-void AbstractButton::set_checked(bool checked, AllowCallback allow_callback)
+void AbstractButton::set_check_state(CheckState state, AllowCallback allow_callback)
 {
-    if (m_checked == checked)
+    if (m_check_state == state)
         return;
-    m_checked = checked;
+    m_check_state = state;
 
-    if (is_exclusive() && checked && parent_widget()) {
+    if (is_exclusive() && state == CheckState::Checked && parent_widget()) {
         bool sibling_had_focus = false;
         parent_widget()->for_each_child_of_type<AbstractButton>([&](auto& sibling) {
             if (!sibling.is_exclusive())
                 return IterationDecision::Continue;
             if (window() && window()->focused_widget() == &sibling)
                 sibling_had_focus = true;
-            if (!sibling.is_checked())
+            if (sibling.is_unchecked_state())
                 return IterationDecision::Continue;
-            sibling.m_checked = false;
+            sibling.m_check_state = CheckState::Unchecked;
             sibling.update();
             if (sibling.on_checked)
-                sibling.on_checked(false);
+                sibling.on_checked(CheckState::Unchecked);
             return IterationDecision::Continue;
         });
-        m_checked = true;
+        m_check_state = CheckState::Checked;
         if (sibling_had_focus)
             set_focus(true);
     }
@@ -72,14 +72,14 @@ void AbstractButton::set_checked(bool checked, AllowCallback allow_callback)
         // In a group of exclusive checkable buttons, only the currently checked button is focusable.
         parent_widget()->for_each_child_of_type<GUI::AbstractButton>([&](auto& button) {
             if (button.is_exclusive() && button.is_checkable())
-                button.set_focus_policy(button.is_checked() ? GUI::FocusPolicy::StrongFocus : GUI::FocusPolicy::NoFocus);
+                button.set_focus_policy(button.is_checked_state() ? GUI::FocusPolicy::StrongFocus : GUI::FocusPolicy::NoFocus);
             return IterationDecision::Continue;
         });
     }
 
     update();
     if (on_checked && allow_callback == AllowCallback::Yes)
-        on_checked(checked);
+        on_checked(state);
 }
 
 void AbstractButton::set_checkable(bool checkable)
@@ -134,7 +134,7 @@ void AbstractButton::mouseup_event(MouseEvent& event)
         bool was_being_pressed = m_being_pressed;
         m_being_pressed = false;
         m_pressed_mouse_button = MouseButton::None;
-        if (!is_checkable() || is_checked())
+        if (!is_checkable() || is_checked_state())
             repaint();
         if (was_being_pressed && !was_auto_repeating) {
             switch (event.button()) {

@@ -120,14 +120,14 @@ void ClassicStylePainter::paint_tab_button(Painter& painter, IntRect const& rect
     }
 }
 
-static void paint_button_new(Painter& painter, IntRect const& a_rect, Palette const& palette, ButtonStyle style, bool pressed, bool checked, bool hovered, bool enabled, bool focused, bool default_button)
+static void paint_button_new(Painter& painter, IntRect const& a_rect, Palette const& palette, ButtonStyle style, bool pressed, CheckState check_state, bool hovered, bool enabled, bool focused, bool default_button)
 {
     Color button_color = palette.button();
     Color highlight_color = palette.threed_highlight();
     Color shadow_color1 = palette.threed_shadow1();
     Color shadow_color2 = palette.threed_shadow2();
 
-    if (checked && enabled) {
+    if (enabled && check_state != CheckState::Unchecked) {
         if (hovered)
             button_color = palette.hover_highlight();
         else
@@ -145,7 +145,7 @@ static void paint_button_new(Painter& painter, IntRect const& a_rect, Palette co
 
     painter.translate(rect.location());
 
-    if (pressed || checked) {
+    if (pressed || check_state != CheckState::Unchecked) {
         // Base
         Gfx::IntRect base_rect { 1, 1, rect.width() - 2, rect.height() - 2 };
 
@@ -192,10 +192,10 @@ static void paint_button_new(Painter& painter, IntRect const& a_rect, Palette co
     }
 }
 
-void ClassicStylePainter::paint_button(Painter& painter, IntRect const& rect, Palette const& palette, ButtonStyle button_style, bool pressed, bool hovered, bool checked, bool enabled, bool focused, bool default_button)
+void ClassicStylePainter::paint_button(Painter& painter, IntRect const& rect, Palette const& palette, ButtonStyle button_style, bool pressed, bool hovered, CheckState check_state, bool enabled, bool focused, bool default_button)
 {
     if (button_style == ButtonStyle::Normal || button_style == ButtonStyle::ThickCap)
-        return paint_button_new(painter, rect, palette, button_style, pressed, checked, hovered, enabled, focused, default_button);
+        return paint_button_new(painter, rect, palette, button_style, pressed, check_state, hovered, enabled, focused, default_button);
 
     if (button_style == ButtonStyle::Coolbar && !enabled)
         return;
@@ -207,7 +207,7 @@ void ClassicStylePainter::paint_button(Painter& painter, IntRect const& rect, Pa
     PainterStateSaver saver(painter);
     painter.translate(rect.location());
 
-    if (pressed || checked) {
+    if (pressed || check_state != CheckState::Unchecked) {
         // Base
         IntRect base_rect { 1, 1, rect.width() - 2, rect.height() - 2 };
         if (button_style == ButtonStyle::Coolbar) {
@@ -394,7 +394,7 @@ void ClassicStylePainter::paint_progressbar(Painter& painter, IntRect const& rec
         painter.draw_text(rect.translated(0, 0), text, TextAlignment::Center, palette.base_text());
 }
 
-void ClassicStylePainter::paint_radio_button(Painter& painter, IntRect const& a_rect, Palette const& palette, bool is_checked, bool is_being_pressed)
+void ClassicStylePainter::paint_radio_button(Painter& painter, IntRect const& a_rect, Palette const& palette, CheckState check_state, bool is_being_pressed)
 {
     // Outer top left arc, starting at bottom left point.
     constexpr Gfx::IntPoint outer_top_left_arc[] = {
@@ -534,10 +534,23 @@ void ClassicStylePainter::paint_radio_button(Painter& painter, IntRect const& a_
     if (is_being_pressed) {
         set_pixels(inner_being_pressed_circle, palette.threed_shadow1());
     }
-    if (is_checked) {
+    if (check_state == CheckState::Checked) {
         set_pixels(checked_circle, palette.base_text());
     }
 }
+
+static constexpr Gfx::CharacterBitmap s_partially_checked_bitmap {
+    "         "
+    "         "
+    "         "
+    " ####### "
+    "#########"
+    " ####### "
+    "         "
+    "         "
+    "         "sv,
+    9, 9
+};
 
 static constexpr Gfx::CharacterBitmap s_checked_bitmap {
     "         "
@@ -552,7 +565,7 @@ static constexpr Gfx::CharacterBitmap s_checked_bitmap {
     9, 9
 };
 
-void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, bool is_checked, bool is_being_pressed)
+void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect, Palette const& palette, bool is_enabled, CheckState check_state, bool is_being_pressed)
 {
     painter.fill_rect(rect, is_enabled ? palette.base() : palette.window());
     paint_frame(painter, rect, palette, Gfx::FrameShape::Container, Gfx::FrameShadow::Sunken, 2);
@@ -562,8 +575,15 @@ void ClassicStylePainter::paint_check_box(Painter& painter, IntRect const& rect,
         painter.draw_rect(rect.shrunken(4, 4), Color::MidGray);
     }
 
-    if (is_checked) {
+    switch (check_state) {
+    case CheckState::PartiallyChecked:
+        painter.draw_bitmap(rect.shrunken(4, 4).location(), s_partially_checked_bitmap, is_enabled ? palette.base_text() : palette.threed_shadow1());
+        break;
+    case CheckState::Checked:
         painter.draw_bitmap(rect.shrunken(4, 4).location(), s_checked_bitmap, is_enabled ? palette.base_text() : palette.threed_shadow1());
+        break;
+    default:
+        break;
     }
 }
 

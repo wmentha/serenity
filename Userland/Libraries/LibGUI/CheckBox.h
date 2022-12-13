@@ -22,12 +22,19 @@ public:
     bool is_autosize() const { return m_autosize; }
     void set_autosize(bool);
 
-    enum class CheckBoxPosition {
+    enum class CheckBoxPosition : bool {
         Left,
         Right,
     };
     CheckBoxPosition checkbox_position() const { return m_checkbox_position; }
     void set_checkbox_position(CheckBoxPosition value) { m_checkbox_position = value; }
+
+    enum class CheckStateDirection : bool {
+      FromPartiallyCheckedToUnchecked,
+      FromPartiallyCheckedToChecked,
+    };
+    CheckStateDirection check_state_direction() const { return m_checkstate_direction; }
+    void set_check_state_direction(CheckStateDirection direction) { m_check_state_direction = direction; }
 
 protected:
     explicit CheckBox(String = {});
@@ -43,6 +50,7 @@ private:
 
     bool m_autosize { false };
     CheckBoxPosition m_checkbox_position { CheckBoxPosition::Left };
+    CheckStateDirection m_check_state_direction { CheckStateDirection::FromPartiallyCheckedToUnchecked };
 };
 
 }

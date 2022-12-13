@@ -12,13 +12,19 @@
 
 namespace GUI {
 
+enum class CheckState {
+    Unchecked = 0,
+    PartiallyChecked = 1,
+    Checked = 2,
+};
+
 class AbstractButton : public Widget {
     C_OBJECT_ABSTRACT(AbstractButton);
 
 public:
     virtual ~AbstractButton() override = default;
 
-    Function<void(bool)> on_checked;
+    Function<void(CheckState)> on_checked;
 
     virtual void set_text(String);
     String const& text() const { return m_text; }
@@ -26,8 +32,12 @@ public:
     bool is_exclusive() const { return m_exclusive; }
     void set_exclusive(bool b) { m_exclusive = b; }
 
-    bool is_checked() const { return m_checked; }
-    void set_checked(bool, AllowCallback = AllowCallback::Yes);
+    bool is_unchecked_state() const { return m_check_state == CheckState::Unchecked; }
+    bool is_partially_checked_state() const { return m_check_state == CheckState::PartiallyChecked; }
+    bool is_checked_state() const { return m_check_state == CheckState::Checked; }
+
+    CheckState check_state() const { return m_check_state; }
+    void set_check_state(CheckState, AllowCallback = AllowCallback::Yes);
 
     bool is_checkable() const { return m_checkable; }
     void set_checkable(bool);
@@ -62,7 +72,7 @@ protected:
 
 private:
     String m_text;
-    bool m_checked { false };
+    CheckState m_check_state { CheckState::Unchecked };
     bool m_checkable { false };
     bool m_hovered { false };
     bool m_being_pressed { false };

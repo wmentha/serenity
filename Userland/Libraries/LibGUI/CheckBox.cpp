@@ -59,7 +59,7 @@ void CheckBox::paint_event(PaintEvent& event)
     if (m_checkbox_position == CheckBoxPosition::Right)
         box_rect.set_right_without_resize(rect().right());
 
-    Gfx::StylePainter::paint_check_box(painter, box_rect, palette(), is_enabled(), is_checked(), is_being_pressed());
+    Gfx::StylePainter::paint_check_box(painter, box_rect, palette(), is_enabled(), check_state(), is_being_pressed());
 
     paint_text(painter, text_rect, font(), Gfx::TextAlignment::TopLeft);
 
@@ -71,7 +71,13 @@ void CheckBox::click(unsigned)
 {
     if (!is_enabled())
         return;
-    set_checked(!is_checked());
+
+    if(is_partially_checked_state()) {
+      if (m_check_state_direction == CheckStateDirection::FromPartiallyCheckedToUnchecked)
+        set_check_state(CheckState::Unchecked);
+      else
+        set_check_state(CheckState::Checked);
+    }
 }
 
 void CheckBox::set_autosize(bool autosize)
